@@ -5,11 +5,6 @@
 contract Factory():
     def getExchange(base_addr: address, token_a: address) -> address: constant
 
-contract Exchange():
-    def getBaseToTokenOutputPrice(tokens_bought: uint256) -> uint256: constant
-    def baseToTokenTransferInput(base_sold: uint256, min_tokens: uint256, deadline: timestamp, recipient: address) -> uint256: modifying
-    def baseToTokenTransferOutput(tokens_bought: uint256, max_base: uint256, deadline: timestamp, recipient: address) -> uint256: modifying
-
 contract Token():
     def balanceOf(_owner: address) -> uint256: constant
     def transfer(_to: address, _value: uint256) -> bool: modifying
@@ -176,53 +171,53 @@ def swapInput(input_token: address, amount_sold: uint256, min_bought: uint256, r
 
     return amount_bought
 
-# @notice Public price function for ETH to Token trades with an exact input.
-# @param eth_sold Amount of ETH sold.
-# @return Amount of Tokens that can be bought with input ETH.
-@public
-@constant
-def getBaseToTokenInputPrice(base_sold: uint256) -> uint256:
-    assert base_sold > 0
-    base_reserve: uint256 = self.tokenB.balanceOf(self)
-    token_reserve: uint256 = self.tokenA.balanceOf(self)
-    tokens_bought: uint256 = self.getInputPrice(base_sold, base_reserve, token_reserve)
-    return tokens_bought
-
-# @notice Public price function for ETH to Token trades with an exact output.
-# @param tokens_bought Amount of Tokens bought.
-# @return Amount of ETH needed to buy output Tokens.
-@public
-@constant
-def getEthToTokenOutputPrice(tokens_bought: uint256) -> uint256:
-    assert tokens_bought > 0
-    base_reserve: uint256 = self.tokenB.balanceOf(self)
-    token_reserve: uint256 = self.tokenA.balanceOf(self)
-    base_sold: uint256 = self.getOutputPrice(tokens_bought, base_reserve, token_reserve)
-    return base_sold
-
-# @notice Public price function for Token to ETH trades with an exact input.
-# @param tokens_sold Amount of Tokens sold.
-# @return Amount of ETH that can be bought with input Tokens.
-@public
-@constant
-def getTokenToBaseInputPrice(tokens_sold: uint256) -> uint256:
-    assert tokens_sold > 0
-    base_reserve: uint256 = self.tokenB.balanceOf(self)
-    token_reserve: uint256 = self.tokenA.balanceOf(self)
-    base_bought: uint256 = self.getInputPrice(tokens_sold, token_reserve, base_reserve)
-    return base_bought
-
-# @notice Public price function for Token to ETH trades with an exact output.
-# @param eth_bought Amount of output ETH.
-# @return Amount of Tokens needed to buy output ETH.
-@public
-@constant
-def getTokenToEthOutputPrice(base_bought: uint256) -> uint256:
-    assert base_bought > 0
-    base_reserve: uint256 = self.tokenB.balanceOf(self)
-    token_reserve: uint256 = self.tokenA.balanceOf(self)
-    tokens_sold: uint256 = self.getOutputPrice(base_bought, token_reserve, base_reserve)
-    return tokens_sold
+# # @notice Public price function for ETH to Token trades with an exact input.
+# # @param eth_sold Amount of ETH sold.
+# # @return Amount of Tokens that can be bought with input ETH.
+# @public
+# @constant
+# def getBaseToTokenInputPrice(base_sold: uint256) -> uint256:
+#     assert base_sold > 0
+#     base_reserve: uint256 = self.tokenB.balanceOf(self)
+#     token_reserve: uint256 = self.tokenA.balanceOf(self)
+#     tokens_bought: uint256 = self.getInputPrice(base_sold, base_reserve, token_reserve)
+#     return tokens_bought
+#
+# # @notice Public price function for ETH to Token trades with an exact output.
+# # @param tokens_bought Amount of Tokens bought.
+# # @return Amount of ETH needed to buy output Tokens.
+# @public
+# @constant
+# def getEthToTokenOutputPrice(tokens_bought: uint256) -> uint256:
+#     assert tokens_bought > 0
+#     base_reserve: uint256 = self.tokenB.balanceOf(self)
+#     token_reserve: uint256 = self.tokenA.balanceOf(self)
+#     base_sold: uint256 = self.getOutputPrice(tokens_bought, base_reserve, token_reserve)
+#     return base_sold
+#
+# # @notice Public price function for Token to ETH trades with an exact input.
+# # @param tokens_sold Amount of Tokens sold.
+# # @return Amount of ETH that can be bought with input Tokens.
+# @public
+# @constant
+# def getTokenToBaseInputPrice(tokens_sold: uint256) -> uint256:
+#     assert tokens_sold > 0
+#     base_reserve: uint256 = self.tokenB.balanceOf(self)
+#     token_reserve: uint256 = self.tokenA.balanceOf(self)
+#     base_bought: uint256 = self.getInputPrice(tokens_sold, token_reserve, base_reserve)
+#     return base_bought
+#
+# # @notice Public price function for Token to ETH trades with an exact output.
+# # @param eth_bought Amount of output ETH.
+# # @return Amount of Tokens needed to buy output ETH.
+# @public
+# @constant
+# def getTokenToEthOutputPrice(base_bought: uint256) -> uint256:
+#     assert base_bought > 0
+#     base_reserve: uint256 = self.tokenB.balanceOf(self)
+#     token_reserve: uint256 = self.tokenA.balanceOf(self)
+#     tokens_sold: uint256 = self.getOutputPrice(base_bought, token_reserve, base_reserve)
+#     return tokens_sold
 
 # ERC20 compatibility for exchange liquidity modified from
 # https://github.com/ethereum/vyper/blob/master/examples/tokens/ERC20.vy
