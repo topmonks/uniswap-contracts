@@ -143,81 +143,95 @@ def getOutputPrice(output_amount: uint256, input_reserve: uint256, output_reserv
 
 @public
 def swapInput(input_token: address, amount_sold: uint256, min_bought: uint256, recipient: address) -> uint256:
-
     token_a: address = self.tokenA
     token_b: address = self.tokenB
-    input_a: bool = input_token == token_a
-    input_b: bool = input_token == token_b
-    assert (input_a or input_b), 'Invalid input token'
-
-    output_token: address = ZERO_ADDRESS
-    if input_a:
+    output_token: address = token_a
+    if input_token == token_a:
         output_token = token_b
-    else:
-        output_token = token_a
+
+    assert input_token == token_a or input_token == token_b, 'Invalid input token'
 
     input_reserve: uint256 = Token(input_token).balanceOf(self)
     output_reserve: uint256 = Token(output_token).balanceOf(self)
     amount_bought: uint256 = self.getInputPrice(amount_sold, input_reserve, output_reserve)
+    assert amount_bought >= min_bought, 'Low output'
 
     transferInput: bool = Token(input_token).transferFrom(msg.sender, self, amount_sold)
     transferOutput: bool = Token(output_token).transfer(recipient, amount_bought)
-    assert transferInput and transferOutput
+    assert transferInput and transferOutput, 'Transfer Failed'
 
-    if input_a:
+    if input_token == token_a:
         log.SwapAForB(msg.sender, amount_sold, amount_bought)
     else:
         log.SwapBForA(msg.sender, amount_sold, amount_bought)
 
     return amount_bought
 
-# # @notice Public price function for ETH to Token trades with an exact input.
-# # @param eth_sold Amount of ETH sold.
-# # @return Amount of Tokens that can be bought with input ETH.
-# @public
-# @constant
-# def getBaseToTokenInputPrice(base_sold: uint256) -> uint256:
-#     assert base_sold > 0
-#     base_reserve: uint256 = self.tokenB.balanceOf(self)
-#     token_reserve: uint256 = self.tokenA.balanceOf(self)
-#     tokens_bought: uint256 = self.getInputPrice(base_sold, base_reserve, token_reserve)
-#     return tokens_bought
-#
-# # @notice Public price function for ETH to Token trades with an exact output.
-# # @param tokens_bought Amount of Tokens bought.
-# # @return Amount of ETH needed to buy output Tokens.
-# @public
-# @constant
-# def getEthToTokenOutputPrice(tokens_bought: uint256) -> uint256:
-#     assert tokens_bought > 0
-#     base_reserve: uint256 = self.tokenB.balanceOf(self)
-#     token_reserve: uint256 = self.tokenA.balanceOf(self)
-#     base_sold: uint256 = self.getOutputPrice(tokens_bought, base_reserve, token_reserve)
-#     return base_sold
-#
-# # @notice Public price function for Token to ETH trades with an exact input.
-# # @param tokens_sold Amount of Tokens sold.
-# # @return Amount of ETH that can be bought with input Tokens.
-# @public
-# @constant
-# def getTokenToBaseInputPrice(tokens_sold: uint256) -> uint256:
-#     assert tokens_sold > 0
-#     base_reserve: uint256 = self.tokenB.balanceOf(self)
-#     token_reserve: uint256 = self.tokenA.balanceOf(self)
-#     base_bought: uint256 = self.getInputPrice(tokens_sold, token_reserve, base_reserve)
-#     return base_bought
-#
-# # @notice Public price function for Token to ETH trades with an exact output.
-# # @param eth_bought Amount of output ETH.
-# # @return Amount of Tokens needed to buy output ETH.
-# @public
-# @constant
-# def getTokenToEthOutputPrice(base_bought: uint256) -> uint256:
-#     assert base_bought > 0
-#     base_reserve: uint256 = self.tokenB.balanceOf(self)
-#     token_reserve: uint256 = self.tokenA.balanceOf(self)
-#     tokens_sold: uint256 = self.getOutputPrice(base_bought, token_reserve, base_reserve)
-#     return tokens_sold
+
+@public
+def swapOutput(output_token: address, amount_bought: uint256, max_sold: uint256, recipient: address) -> uint256:
+    token_a: address = self.tokenA
+    token_b: address = self.tokenB
+    input_token: address = token_a
+    if output_token == token_a:
+        input_token = token_b
+
+    assert output_token == token_a or output_token == token_b, 'Invalid output token'
+
+    input_reserve: uint256 = Token(input_token).balanceOf(self)
+    output_reserve: uint256 = Token(output_token).balanceOf(self)
+    amount_sold: uint256 = self.getOutputPrice(amount_bought, input_reserve, output_reserve)
+    assert amount_sold <= max_sold, 'High input'
+
+    transferInput: bool = Token(input_token).transferFrom(msg.sender, self, amount_sold)
+    transferOutput: bool = Token(output_token).transfer(recipient, amount_bought)
+    assert transferInput and transferOutput, 'Transfer Failed'
+
+    if input_token == token_a:
+        log.SwapAForB(msg.sender, amount_sold, amount_bought)
+    else:
+        log.SwapBForA(msg.sender, amount_sold, amount_bought)
+
+    return amount_bought
+
+
+# @notice Public price function for ETH to Token trades with an exact input.
+# @param eth_sold Amount of ETH sold.
+# @return Amount of Tokens that can be bought with input ETH.
+@public
+@constant
+def getSwapInputPrice(input_token: address, amount_sold: uint256) -> uint256:
+    assert amount_sold > 0, 'Amount is zero'
+    token_a: address = self.tokenA
+    token_b: address = self.tokenB
+    output_token: address = token_a
+    if input_token == token_a:
+        output_token = token_b
+    assert input_token == token_a or input_token == token_b, 'Invalid input token'
+    input_reserve: uint256 = self.tokenB.balanceOf(self)
+    output_reserve: uint256 = self.tokenA.balanceOf(self)
+    tokens_bought: uint256 = self.getInputPrice(amount_sold, input_reserve, output_reserve)
+    return tokens_bought
+
+
+# @notice Public price function for ETH to Token trades with an exact input.
+# @param eth_sold Amount of ETH sold.
+# @return Amount of Tokens that can be bought with input ETH.
+@public
+@constant
+def getSwapOutputPrice(output_token: address, amount_bought: uint256) -> uint256:
+    assert amount_bought > 0, 'Amount is zero'
+    token_a: address = self.tokenA
+    token_b: address = self.tokenB
+    input_token: address = token_a
+    if output_token == token_a:
+        input_token = token_b
+    assert output_token == token_a or output_token == token_b, 'Invalid output token'
+    input_reserve: uint256 = self.tokenB.balanceOf(self)
+    output_reserve: uint256 = self.tokenA.balanceOf(self)
+    tokens_sold: uint256 = self.getOutputPrice(amount_bought, input_reserve, output_reserve)
+    return tokens_sold
+
 
 # ERC20 compatibility for exchange liquidity modified from
 # https://github.com/ethereum/vyper/blob/master/examples/tokens/ERC20.vy
